@@ -14,6 +14,7 @@
     </div> 
 }
 export default MessageContainer;*/
+import Table from 'react-bootstrap/Table';
 const MessageContainer = ({ messages }) => {
     if (!messages || messages.length === 0) {
       return <div>No messages available</div>;

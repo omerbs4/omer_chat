@@ -32,6 +32,17 @@ namespace FormulaOne.ChatService.Hubs
                 .SendAsync("ReceiveMessage", "admin", $"{conn.Username} has joined {conn.ChatRoom}");
         }
 
+        //yaziyor kismi
+
+        public async Task UserTyping(string username)
+        {
+
+            await Clients.Others.SendAsync("UserIsTyping",username);
+
+        }
+
+        //___________
+
         public async Task SendMessage(string msg)
         {
 
