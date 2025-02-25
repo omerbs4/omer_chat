@@ -1,0 +1,112 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+  }
+  
+  h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  /* chat_room */
+  .chat-room-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+  
+  .typing-indicator {
+    font-style: italic;
+    font-size: 14px;
+    color: #000000;
+    margin-bottom: 2px;
+  }
+  
+  
+  .message-container {
+    max-height: 150px;
+    overflow-y: scroll;
+    border: 1px solid #ddd;
+    padding-right: 10px;
+    background-color: #fafafa;
+    border-radius: 8px;
+    margin-bottom: 20px;  
+    display: flex;
+    flex-direction: column-reverse;
+
+
+  }
+  
+ 
+  .message {
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+  
+  .message.sent {
+    background-color: #e0f7fa;
+    align-self: flex-end;
+  }
+  
+  .message.received {
+    background-color: #e1bee7;
+    align-self: flex-start;
+  }
+  
+  
+  .send-message-form {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .send-message-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+  
+  .send-message-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .send-message-button:hover {
+    background-color: #9dff00;
+  }
+  div{
+
+    color: #000000;
+    
+  }
+  /*cikis butonu*/
+  .btn-danger{
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 8px;
+  }
+
+
+
+
+
+
+  
