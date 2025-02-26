@@ -36,7 +36,8 @@ body {
     overflow-y: scroll;
     border: 1px solid #ddd;
     padding-right: 10px;
-    background-color: #fafafa;
+    
+    transition: background-color 0.3s ease-in-out;
     border-radius: 8px;
     margin-bottom: 20px;  
     display: flex;

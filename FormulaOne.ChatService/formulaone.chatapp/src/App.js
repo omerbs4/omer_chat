@@ -7,15 +7,11 @@ import { useState } from 'react';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import ChatRoom from './components/ChatRoom';
 
-
-
 function App() {
   const [conn, setConnection] = useState(null);
   const [messages, setMessages] = useState([]);
   const [username, setUserName] = useState('');
   const [chatroom, setChatroom] = useState('');
-
-
 
   const joinChatRoom = async (username, chatroom) => {
     try {
@@ -30,6 +26,10 @@ function App() {
 
       connection.on('ReceiveSpecificMessage', (username, msg) => {
         setMessages((messages) => [...messages, { username, msg }]);
+      });
+
+      connection.on('UpdateUserList', (users) => {
+        console.log('Aktif :', users);
       });
 
       await connection.start();
@@ -51,8 +51,6 @@ function App() {
     }
   };
 
-  
-
   return (
     <div>
       <main>
@@ -72,7 +70,6 @@ function App() {
               conn={conn}
               username={username}
               chatroom={chatroom}
-             
             />
           )}
         </Container>

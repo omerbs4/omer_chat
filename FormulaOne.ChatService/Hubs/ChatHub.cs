@@ -10,10 +10,32 @@ namespace FormulaOne.ChatService.Hubs
     public class ChatHub : Hub
     {
         private static Dictionary<string,string> typingUsers = new Dictionary<string,string>();
+        private static Dictionary<string,UserConnection> ConnectedUsers = new Dictionary<string, UserConnection>();
+
 
 
         private readonly SharedDb _shared;
         public ChatHub(SharedDb shared) => _shared = shared;
+
+
+        public override async Task OnConnectedAsync()
+        {
+            await Clients.Caller.SendAsync("Connected",Context.ConnectionId);
+            await base.OnConnectedAsync();
+
+        }
+
+        public override async Task OnDisconnectedAsync(Exception ex)
+        {
+            if(ConnectedUsers.TryGetValue(Context.ConnectionId, out UserConnection user))
+            {
+                ConnectedUsers.Remove(Context.ConnectionId);
+                await Clients.Group(user.ChatRoom).SendAsync("UserLeft",user.Username);
+                await UpdateUserList(user.ChatRoom);
+
+            }
+            await base.OnDisconnectedAsync(ex);
+        }
 
         public async Task JoinChat(UserConnection conn)
         {
@@ -28,10 +50,14 @@ namespace FormulaOne.ChatService.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, conn.ChatRoom);
 
             _shared.connections[Context.ConnectionId] = conn;
+            ConnectedUsers[Context.ConnectionId] = conn;
+
 
             // grup kullanici mesajlari
             await Clients.Group(conn.ChatRoom)
                 .SendAsync("ReceiveMessage", "admin", $"{conn.Username} has joined {conn.ChatRoom}");
+
+            await UpdateUserList(conn.ChatRoom);
         }
 
         //yaziyor kismi
@@ -50,10 +76,32 @@ namespace FormulaOne.ChatService.Hubs
 
             if(_shared.connections.TryGetValue(Context.ConnectionId, out UserConnection conn))
             {
-                await Clients.Group(conn.ChatRoom)
+
+                if(msg.StartsWith("/color"))
+                {
+                    string color =msg.Split(" ").Length > 1 ? msg.Split(" ")[1] : "#007bff"; 
+                    Console.WriteLine($"[LOG] {conn.Username} chat rengini {color} yapti!");
+                    await Clients.Group(conn.ChatRoom).SendAsync("ChangeThemeColor",color);
+
+                }
+                else{
+                        await Clients.Group(conn.ChatRoom)
                     .SendAsync("ReceiveSpecificMessage",conn.Username,msg);
+                }
+                
 
             }
+        }
+
+        private async Task UpdateUserList(string chatroom)
+        {
+            var userInRoom = ConnectedUsers.Values
+            .Where(u=> u.ChatRoom == chatroom)
+            .Select(u=> u.Username)
+            .ToList();
+
+
+            await Clients.Group(chatroom).SendAsync("UpdateUserList",userInRoom);
         }
 
 
