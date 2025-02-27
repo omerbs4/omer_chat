@@ -1,19 +1,15 @@
 import { useState, useEffect } from "react";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Button } from "react-bootstrap";
 import MessageContainer from "./MessageContainer";
 import SendMessageForm from "./SendMessageForm";
 import "./ChatRoom.css";
 
 const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
   const [typingUser, setTypingUser] = useState(null);
-
-  const [userList,setUserList] = useState([]);
-
-  const [themeColor, setThemeColor] = useState("#9dff00"); //varsayilan renk
-  // message containre i duzelt, -/color command- -fotograf input- 25.02.2025
-
-  //const [newRoom,setRoomName] = useState('');
-
+  const [userList, setUserList] = useState([]);
+  const [themeColor, setThemeColor] = useState("#9dff00"); // Varsayılan renk
+  const [poll, setPoll] = useState(null);
+  const [pollResults, setPollResults] = useState(null);
 
   useEffect(() => {
     if (conn) {
@@ -25,39 +21,44 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
         setTypingUser(null);
       });
 
-      conn.on("ChangeThemeColor", (color) =>{
-        console.log("yeni renk:",color);
+      conn.on("ChangeThemeColor", (color) => {
+        console.log("Yeni renk:", color);
         setThemeColor(color);
+      });
 
-      })
-
-      conn.on("UpdateUserList",(users)=>{
-        console.log("Active users updated:", users);
+      conn.on("UpdateUserList", (users) => {
+        console.log("Aktif kullanıcılar güncellendi:", users);
         setUserList(users);
       });
 
-      conn.on("UserLeft",(user)=>{
-        setUserList((prevUsers) => {
-          console.log("kullanici ayrildi" ,user);
-          return prevUsers.filter((a)=> a!== user);
-        });
-        
-      } );
-     /* conn.on("RoomNameChanged",(newRoom) =>{
-        setRoomName(newRoom);
-      })*/
+      conn.on("UserLeft", (user) => {
+        setUserList((prevUsers) => prevUsers.filter((u) => u !== user));
+      });
 
-      //test activ userlist
+      // Anket olayları
+      conn.on("PollStarted", (question, options) => {
+        setPoll({ question, options });
+        setPollResults(new Array(options.length).fill(0));
+      });
 
-      conn.invoke("GetUserList",chatroom)
-        .then((users) => {
-          console.log("mevcut liste: ",users);
-          setUserList(users);
+      conn.on("PollUpdated", (options, votes) => {
+        setPollResults(votes);
+      });
 
-        })
-        .catch((err) => console.error("liste guncellenmedi",err))
+      conn.on("PollEnded", (options, votes) => {
+        alert("Anket sona erdi! Sonuçlar: " + JSON.stringify(votes));
+        setPoll(null);
+        setPollResults(null);
+      });
+
+      conn.on("PollError", (message) => {
+        alert(message);
+      });
+
+      conn.invoke("GetUserList", chatroom)
+        .then((users) => setUserList(users))
+        .catch((err) => console.error("Liste güncellenmedi", err));
     }
-
 
     return () => {
       if (conn) {
@@ -66,6 +67,10 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
         conn.off("UpdateUserList");
         conn.off("ChangeThemeColor");
         conn.off("UserLeft");
+        conn.off("PollStarted");
+        conn.off("PollUpdated");
+        conn.off("PollEnded");
+        conn.off("PollError");
       }
     };
   }, [conn]);
@@ -80,6 +85,25 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
     if (conn && chatroom) {
       conn.invoke("StopTyping", chatroom);
     }
+  };
+
+  const startPoll = async () => {
+    const question = prompt("Anket sorusunu girin:");
+    if (!question) return;
+
+    const optionsInput = prompt("Seçenekleri virgülle ayırarak girin (örn: JavaScript, Python, C#):");
+    if (!optionsInput) return;
+
+    const options = optionsInput.split(",").map((o) => o.trim());
+    await conn.invoke("StartPoll", chatroom, question, options);
+  };
+
+  const vote = async (optionIndex) => {
+    await conn.invoke("Vote", chatroom, optionIndex);
+  };
+
+  const endPoll = async () => {
+    await conn.invoke("EndPoll", chatroom);
   };
 
   return (
@@ -100,21 +124,31 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
 
       <Row className="px-5 py-5">
         <Col sm={12}>
-          <div className="message-container"  style={{backgroundColor:themeColor, transition:"0.7s"}}> 
+          <div className="message-container" style={{ backgroundColor: themeColor, transition: "0.7s" }}>
             <MessageContainer messages={messages} />
           </div>
         </Col>
 
-        
-
         <Col sm={12}>
-          <SendMessageForm
-            sendMessage={sendMessage}
-            handleTyping={handleTyping}
-            handleStopTyping={handleStopTyping}
-          />
+          <SendMessageForm sendMessage={sendMessage} handleTyping={handleTyping} handleStopTyping={handleStopTyping} />
         </Col>
       </Row>
+
+      {poll && (
+        <div className="poll-container">
+          <h3>{poll.question}</h3>
+          {poll.options.map((option, index) => (
+            <Button key={index} onClick={() => vote(index)}>
+              {option} ({pollResults ? pollResults[index] : 0} oy)
+            </Button>
+          ))}
+          <Button variant="danger" onClick={endPoll}>
+            Anketi Bitir
+          </Button>
+        </div>
+      )}
+
+      {!poll && <Button onClick={startPoll}>Anket Başlat</Button>}
 
       {typingUser && <div className="typing-indicator">{typingUser}</div>}
     </div>

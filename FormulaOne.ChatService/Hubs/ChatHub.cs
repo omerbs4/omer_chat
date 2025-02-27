@@ -13,6 +13,10 @@ namespace FormulaOne.ChatService.Hubs
     {
         private static Dictionary<string,string> typingUsers = new Dictionary<string,string>();
         private static Dictionary<string,UserConnection> ConnectedUsers = new Dictionary<string, UserConnection>();
+        //anket sistemi
+        private static Dictionary<string,Poll> ActivePolls = new Dictionary<string, Poll>();
+
+
 
         private readonly SharedDb _shared;
         public ChatHub(SharedDb shared) => _shared = shared;
@@ -117,5 +121,56 @@ namespace FormulaOne.ChatService.Hubs
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatroom);
         }
+
+        public async Task StartPoll(string chatRoom,string question, List<string> options)
+        {
+            if(ActivePolls.ContainsKey(chatRoom))
+            {
+                await Clients.Caller.SendAsync("PollError","zaten aktif bir anket var!");return;
+
+                
+            }
+            var poll =new Poll
+            {
+                Question = question,
+                Options = options,
+                Votes = new int[options.Count]
+            };
+
+            ActivePolls[chatRoom] = poll;
+            await Clients.Group(chatRoom).SendAsync("PollStarted",question,options);
+
+        }
+        public async Task Vote(string chatRoom, int optionIndex )
+        {
+            if(!ActivePolls.TryGetValue(chatRoom,out var poll))
+            {
+                await Clients.Caller.SendAsync("PollError","aktif bir anket bulunmuyor!");return;
+            }
+            if(optionIndex < 0 || optionIndex >=poll.Options.Count)
+            {
+
+                await Clients.Caller.SendAsync("PollError","gecersiz secenek!");return;
+
+
+            }
+            poll.Votes[optionIndex]++;
+            await Clients.Group(chatRoom).SendAsync("PollUpdated",poll.Options,poll.Votes);
+
+
+        }
+
+        public async Task EndPoll(string chatRoom)
+        {
+            if(!ActivePolls.ContainsKey(chatRoom))
+            {
+                await Clients.Caller.SendAsync("PollError","aktif bir anket yok!");return;
+            }
+            var poll = ActivePolls[chatRoom];
+            ActivePolls.Remove(chatRoom);
+
+            await Clients.Group(chatRoom).SendAsync("PollEnded",poll.Options,poll.Votes);
+        }      
     }
+   
 }
