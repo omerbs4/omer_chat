@@ -12,6 +12,8 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
   const [themeColor, setThemeColor] = useState("#9dff00"); //varsayilan renk
   // message containre i duzelt, -/color command- -fotograf input- 25.02.2025
 
+  //const [newRoom,setRoomName] = useState('');
+
 
   useEffect(() => {
     if (conn) {
@@ -30,12 +32,30 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
       })
 
       conn.on("UpdateUserList",(users)=>{
+        console.log("Active users updated:", users);
         setUserList(users);
       });
 
       conn.on("UserLeft",(user)=>{
-        setUserList((prevUsers) => prevUsers.filter((u) => u!==user));
+        setUserList((prevUsers) => {
+          console.log("kullanici ayrildi" ,user);
+          return prevUsers.filter((a)=> a!== user);
+        });
+        
       } );
+     /* conn.on("RoomNameChanged",(newRoom) =>{
+        setRoomName(newRoom);
+      })*/
+
+      //test activ userlist
+
+      conn.invoke("GetUserList",chatroom)
+        .then((users) => {
+          console.log("mevcut liste: ",users);
+          setUserList(users);
+
+        })
+        .catch((err) => console.error("liste guncellenmedi",err))
     }
 
 

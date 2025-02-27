@@ -12,6 +12,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [username, setUserName] = useState('');
   const [chatroom, setChatroom] = useState('');
+  const [activeUsers,setActiveUsers] = useState([]);
 
   const joinChatRoom = async (username, chatroom) => {
     try {
@@ -30,7 +31,11 @@ function App() {
 
       connection.on('UpdateUserList', (users) => {
         console.log('Aktif :', users);
+        setActiveUsers(users);
+        
       });
+
+      
 
       await connection.start();
       await connection.invoke('JoinSpecificChatRoom', { username, chatroom });
@@ -38,6 +43,7 @@ function App() {
       setUserName(username);
       setChatroom(chatroom);
       setConnection(connection);
+     
     } catch (error) {
       console.log(error);
     }
@@ -70,6 +76,7 @@ function App() {
               conn={conn}
               username={username}
               chatroom={chatroom}
+              activeUsers={activeUsers}
             />
           )}
         </Container>
