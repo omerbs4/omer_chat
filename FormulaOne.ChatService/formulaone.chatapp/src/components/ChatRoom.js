@@ -10,6 +10,8 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
   const [themeColor, setThemeColor] = useState("#9dff00"); // Varsayılan renk
   const [poll, setPoll] = useState(null);
   const [pollResults, setPollResults] = useState(null);
+  const [backgroundImage,setBackgroundImage] = useState(null);
+ 
 
   useEffect(() => {
     if (conn) {
@@ -55,9 +57,12 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
         alert(message);
       });
 
+
       conn.invoke("GetUserList", chatroom)
         .then((users) => setUserList(users))
         .catch((err) => console.error("Liste güncellenmedi", err));
+
+      
     }
 
     return () => {
@@ -71,9 +76,28 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
         conn.off("PollUpdated");
         conn.off("PollEnded");
         conn.off("PollError");
+        
       }
     };
-  }, [conn]);
+  }, [conn,chatroom]);
+
+
+
+  const handleBackgroundUpload = (event) =>{
+    const file = event.target.files[0];
+
+    if(!file) return;
+
+    if(file.type !== "image/png")
+    {
+      alert(".png formati seciniz!");return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () =>{
+      setBackgroundImage(reader.result);
+    };
+    reader.readAsDataURL(file);    
+  };
 
   const handleTyping = () => {
     if (conn && username && chatroom) {
@@ -106,6 +130,7 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
     await conn.invoke("EndPoll", chatroom);
   };
 
+
   return (
     <div>
       <Row className="px-5 py-5">
@@ -124,13 +149,34 @@ const ChatRoom = ({ messages, sendMessage, conn, username, chatroom }) => {
 
       <Row className="px-5 py-5">
         <Col sm={12}>
-          <div className="message-container" style={{ backgroundColor: themeColor, transition: "0.7s" }}>
+          <div className="message-container" 
+          style={{ 
+            backgroundColor: themeColor,
+            backgroundImage:backgroundImage ? `url(${backgroundImage})` : "none",
+            backgroundSize:"cover",
+            backgroundPosition:"center",
+             transition: "0.7s" }}>
             <MessageContainer messages={messages} />
           </div>
         </Col>
 
+
         <Col sm={12}>
           <SendMessageForm sendMessage={sendMessage} handleTyping={handleTyping} handleStopTyping={handleStopTyping} />
+        </Col>
+
+
+        <Col sm={12} className="mt-3">
+          <Button onClick={() => document.getElementById("backgroundUpload").click()}>
+            Arka Planı Değiştir
+          </Button>
+          <input
+            type="file"
+            accept="image/png"
+            id="backgroundUpload"
+            style={{ display: "none" }}
+            onChange={handleBackgroundUpload}
+          />
         </Col>
       </Row>
 

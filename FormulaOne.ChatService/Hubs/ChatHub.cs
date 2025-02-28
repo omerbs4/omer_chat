@@ -170,7 +170,16 @@ namespace FormulaOne.ChatService.Hubs
             ActivePolls.Remove(chatRoom);
 
             await Clients.Group(chatRoom).SendAsync("PollEnded",poll.Options,poll.Votes);
-        }      
+        } 
+
+        public async Task SendImage(string base64Image,string fileName)
+        {
+            if(_shared.connections.TryGetValue(Context.ConnectionId,out UserConnection conn))
+            {
+                await Clients.Group(conn.ChatRoom).SendAsync("ReceiveMessage",conn.Username,base64Image,fileName);
+                
+            }
+        }     
     }
    
 }
